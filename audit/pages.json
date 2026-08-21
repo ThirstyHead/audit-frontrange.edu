@@ -1,0 +1,9 @@
+{
+  "baseUrl": "https://frontrange.edu",
+  "pages": [
+    "/",
+    "/about",
+    "/admissions",
+    "/programs"
+  ]
+}
