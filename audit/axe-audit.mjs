@@ -93,9 +93,30 @@ function printSummary(pages) {
   for (const [id, n] of sorted) console.log(`  ${id}: ${n}`);
 }
 
-const targetUrls = process.argv.slice(2).length
-  ? process.argv.slice(2)
-  : [BASE, `${BASE}/about`, `${BASE}/admissions`, `${BASE}/programs`];
+// Target URLs, highest precedence first:
+//   1. Explicit CLI args  ->  node audit/axe-audit.mjs <url> [url...]
+//   2. audit/pages.json   ->  { baseUrl, pages: [path | url | { path|url, ... }] }
+//   3. Legacy hardcoded fallback
+const PAGES_CONFIG = path.join(__dirname, 'pages.json');
+function loadTargetUrls(cliArgs) {
+  if (cliArgs.length) return cliArgs;
+  if (fs.existsSync(PAGES_CONFIG)) {
+    const cfg = JSON.parse(fs.readFileSync(PAGES_CONFIG, 'utf8'));
+    const base = cfg.baseUrl || BASE;
+    const urls = (cfg.pages || []).map((p) =>
+      typeof p === 'string'
+        ? /^https?:/i.test(p)
+          ? p
+          : new URL(p, base).toString()
+        : p.url
+          ? p.url
+          : new URL(p.path, base).toString(),
+    );
+    if (urls.length) return [...new Set(urls)];
+  }
+  return [BASE, `${BASE}/about`, `${BASE}/admissions`, `${BASE}/programs`];
+}
+const targetUrls = loadTargetUrls(process.argv.slice(2));
 
 const browser = await chromium.launch();
 const pages = [];
