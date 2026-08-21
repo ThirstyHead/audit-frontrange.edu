@@ -1,0 +1,19 @@
+{
+  "name": "audit-frontrange.edu",
+  "version": "1.0.0",
+  "description": "Audit https://frontrange.edu for WCAG 2.1 AA compliance",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThirstyHead/audit-frontrange.edu.git"
+  },
+  "author": "Scott Davis <scott@thirstyhead.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThirstyHead/audit-frontrange.edu/issues"
+  },
+  "homepage": "https://github.com/ThirstyHead/audit-frontrange.edu#readme"
+}
