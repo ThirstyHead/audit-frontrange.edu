@@ -1,0 +1,117 @@
+/**
+ * WCAG 2.1 AA audit for https://frontrange.edu
+ * Run: node audit/axe-audit.mjs
+ * Output: JSON report to audit/reports/ + human summary on stdout.
+ */
+import { chromium } from 'playwright';
+import AxeBuilder from '@axe-core/playwright';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPORTS = path.join(__dirname, 'reports');
+fs.mkdirSync(REPORTS, { recursive: true });
+
+const BASE = 'https://frontrange.edu';
+const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+const SEVERITY_ORDER = ['critical', 'serious', 'moderate', 'minor'];
+
+async function auditPage(browser, url) {
+  const context = await browser.newContext({
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    // Give lazy hydration / SPAs a beat before analyzing (SPA false-negative guard)
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+
+    const results = await new AxeBuilder({ page })
+      .withTags(TAGS)
+      .analyze();
+
+    const violations = results.violations.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      help: v.help,
+      helpUrl: v.helpUrl,
+      wcag: v.tags.filter((t) => /^wcag\d/.test(t)),
+      nodes: v.nodes.length,
+      firstTargets: v.nodes.slice(0, 5).map((n) => n.target.join(' ')),
+    }));
+    const incomplete = results.incomplete.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      help: v.help,
+      wcag: v.tags.filter((t) => /^wcag\d/.test(t)),
+      nodes: v.nodes.length,
+      firstTargets: v.nodes.slice(0, 3).map((n) => n.target.join(' ')),
+    }));
+
+    return {
+      url,
+      title: await page.title().catch(() => null),
+      finalUrl: page.url(),
+      violations,
+      violationTotal: violations.reduce((n, v) => n + v.nodes, 0),
+      incomplete,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+function printSummary(pages) {
+  console.log('\n=== WCAG 2.1 AA AUDIT SUMMARY ===\n');
+  const allRules = new Map();
+  for (const p of pages) {
+    console.log(`\n## ${p.url}${p.title ? ` — "${p.title}"` : ''}`);
+    if (p.violations.length === 0) {
+      console.log('  No axe violations found.');
+      continue;
+    }
+    let total = 0;
+    for (const sev of SEVERITY_ORDER) {
+      const vs = p.violations.filter((v) => v.impact === sev);
+      if (!vs.length) continue;
+      for (const v of vs) {
+        total += v.nodes;
+        allRules.set(v.id, (allRules.get(v.id) || 0) + v.nodes);
+        console.log(`  [${sev}] ${v.id} (${v.nodes}x) — ${v.help}`);
+        console.log(`     WCAG: ${v.wcag.join(', ')}`);
+        console.log(`     e.g. ${v.firstTargets.slice(0, 2).join('  |  ')}`);
+      }
+    }
+    console.log(`  → ${total} node-level violations across ${p.violations.length} rules`);
+    if (p.incomplete) console.log(`  → ${p.incomplete} incomplete (needs manual review)`);
+  }
+  console.log('\n=== RULES BY TOTAL NODE COUNT (all pages) ===');
+  const sorted = [...allRules.entries()].sort((a, b) => b[1] - a[1]);
+  for (const [id, n] of sorted) console.log(`  ${id}: ${n}`);
+}
+
+const targetUrls = process.argv.slice(2).length
+  ? process.argv.slice(2)
+  : [BASE, `${BASE}/about`, `${BASE}/admissions`, `${BASE}/programs`];
+
+const browser = await chromium.launch();
+const pages = [];
+for (const url of targetUrls) {
+  process.stderr.write(`Auditing ${url} ...\n`);
+  try {
+    pages.push(await auditPage(browser, url));
+  } catch (e) {
+    pages.push({ url, error: String(e) });
+    console.error(`  FAILED: ${e}`);
+  }
+}
+await browser.close();
+
+const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+const out = path.join(REPORTS, `axe-${stamp}.json`);
+fs.writeFileSync(out, JSON.stringify({ generated: new Date().toISOString(), tags: TAGS, pages }, null, 2));
+printSummary(pages);
+console.log(`\nFull report: ${out}`);

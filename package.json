@@ -4,7 +4,8 @@
   "description": "Audit https://frontrange.edu for WCAG 2.1 AA compliance",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "audit": "node audit/axe-audit.mjs",
+    "test": "node audit/axe-audit.mjs"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/ThirstyHead/audit-frontrange.edu/issues"
   },
-  "homepage": "https://github.com/ThirstyHead/audit-frontrange.edu#readme"
+  "homepage": "https://github.com/ThirstyHead/audit-frontrange.edu#readme",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "playwright": "^1.62.1"
+  }
 }

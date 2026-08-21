@@ -1,0 +1,172 @@
+{
+  "generated": "2026-08-21T18:49:25.748Z",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa"
+  ],
+  "pages": [
+    {
+      "url": "https://frontrange.edu",
+      "title": "FRCC | Front Range Community College",
+      "finalUrl": "https://frontrange.edu/",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "wcag": [
+            "wcag2aa",
+            "wcag143"
+          ],
+          "nodes": 35,
+          "firstTargets": [
+            ".cluster > li:nth-child(1) > strong > a",
+            ".cluster > li:nth-child(2) > a[rel=\"noopener\"][target=\"_blank\"]",
+            ".cluster > li:nth-child(3) > a[href$=\"mycourses.cccs.edu/\"][rel=\"noopener\"][target=\"_blank\"]"
+          ]
+        },
+        {
+          "id": "duplicate-id-aria",
+          "impact": "critical",
+          "help": "IDs used in ARIA and labels must be unique",
+          "wcag": [
+            "wcag2a",
+            "wcag412"
+          ],
+          "nodes": 1,
+          "firstTargets": [
+            "#ou-search-div > .cluster.gap-s > li:nth-child(4) > .search.drawer-right.drawer > .p-2xl.flow > .search__form[method=\"get\"][action=\"/search/\"] > .search__input-wrapper.items-center.gap-s > .search__input.py-xs[type=\"search\"]"
+          ]
+        },
+        {
+          "id": "video-caption",
+          "impact": "critical",
+          "help": "<video> elements must have captions",
+          "wcag": [
+            "wcag2a",
+            "wcag122"
+          ],
+          "nodes": 1,
+          "firstTargets": [
+            "video"
+          ]
+        }
+      ]
+    },
+    {
+      "url": "https://frontrange.edu/about",
+      "title": "Learn more about Front Range Community College",
+      "finalUrl": "https://frontrange.edu/about/",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "wcag": [
+            "wcag2aa",
+            "wcag143"
+          ],
+          "nodes": 32,
+          "firstTargets": [
+            ".cluster > li:nth-child(1) > strong > a",
+            ".cluster > li:nth-child(2) > a[rel=\"noopener\"][target=\"_blank\"]",
+            ".cluster > li:nth-child(3) > a[href$=\"mycourses.cccs.edu/\"][rel=\"noopener\"][target=\"_blank\"]"
+          ]
+        },
+        {
+          "id": "duplicate-id-aria",
+          "impact": "critical",
+          "help": "IDs used in ARIA and labels must be unique",
+          "wcag": [
+            "wcag2a",
+            "wcag412"
+          ],
+          "nodes": 1,
+          "firstTargets": [
+            "#ou-search-div > .gap-s.cluster > li:nth-child(4) > .search.drawer-right.drawer > .p-2xl.flow > form > .search__input-wrapper.items-center.gap-s > input"
+          ]
+        }
+      ]
+    },
+    {
+      "url": "https://frontrange.edu/admissions",
+      "title": "Admissions and Financial Aid | Front Range Community College",
+      "finalUrl": "https://www.frontrange.edu/admissions-aid/index.html",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "wcag": [
+            "wcag2aa",
+            "wcag143"
+          ],
+          "nodes": 38,
+          "firstTargets": [
+            ".cluster > li:nth-child(1) > strong > a",
+            ".cluster > li:nth-child(2) > a[rel=\"noopener\"][target=\"_blank\"]",
+            ".cluster > li:nth-child(3) > a[href$=\"mycourses.cccs.edu/\"][rel=\"noopener\"][target=\"_blank\"]"
+          ]
+        },
+        {
+          "id": "duplicate-id-aria",
+          "impact": "critical",
+          "help": "IDs used in ARIA and labels must be unique",
+          "wcag": [
+            "wcag2a",
+            "wcag412"
+          ],
+          "nodes": 1,
+          "firstTargets": [
+            "#ou-search-div > .gap-s.cluster > li:nth-child(4) > .search.drawer-right.drawer > .p-2xl.flow > form > .search__input-wrapper.gap-s.items-center > input"
+          ]
+        }
+      ]
+    },
+    {
+      "url": "https://frontrange.edu/programs",
+      "title": "FRCC | Front Range Community College A-Z Program List",
+      "finalUrl": "https://www.frontrange.edu/programs-courses/program-finder.html",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "wcag": [
+            "wcag2aa",
+            "wcag143"
+          ],
+          "nodes": 249,
+          "firstTargets": [
+            ".c-header__menu1 > ul > li:nth-child(1) > strong > a",
+            ".c-header__menu1 > ul > li:nth-child(2) > a[rel=\"noopener\"][target=\"_blank\"]",
+            ".c-header__menu1 > ul > li:nth-child(3) > a[href$=\"mycourses.cccs.edu/\"][rel=\"noopener\"][target=\"_blank\"]"
+          ]
+        },
+        {
+          "id": "duplicate-id-aria",
+          "impact": "critical",
+          "help": "IDs used in ARIA and labels must be unique",
+          "wcag": [
+            "wcag2a",
+            "wcag412"
+          ],
+          "nodes": 1,
+          "firstTargets": [
+            "#ou-search-div > .gap-s > li:nth-child(4) > .search.drawer-right.drawer > .p-2xl.flow > .search__form[method=\"get\"][action=\"/search/\"] > .search__input-wrapper.items-center.gap-s > .search__input.border-none.py-xs"
+          ]
+        }
+      ]
+    }
+  ]
+}

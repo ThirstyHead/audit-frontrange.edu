@@ -1,0 +1,43 @@
+{
+  "generated": "2026-08-21T18:47:49.509Z",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa"
+  ],
+  "pages": [
+    {
+      "url": "https://frontrange.edu",
+      "title": "FRCC | Front Range Community College",
+      "finalUrl": "https://frontrange.edu/",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": 3
+    },
+    {
+      "url": "https://frontrange.edu/about",
+      "title": "Learn more about Front Range Community College",
+      "finalUrl": "https://frontrange.edu/about/",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": 2
+    },
+    {
+      "url": "https://frontrange.edu/admissions",
+      "title": "Admissions and Financial Aid | Front Range Community College",
+      "finalUrl": "https://www.frontrange.edu/admissions-aid/index.html",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": 2
+    },
+    {
+      "url": "https://frontrange.edu/programs",
+      "title": "FRCC | Front Range Community College A-Z Program List",
+      "finalUrl": "https://www.frontrange.edu/programs-courses/program-finder.html",
+      "violations": [],
+      "violationTotal": 0,
+      "incomplete": 2
+    }
+  ]
+}
