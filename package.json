@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "audit": "node audit/axe-audit.mjs",
-    "test": "node audit/axe-audit.mjs"
+    "test": "node audit/axe-audit.mjs",
+    "site:build": "node site/build-site.mjs"
   },
   "repository": {
     "type": "git",

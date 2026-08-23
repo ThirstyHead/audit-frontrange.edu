@@ -1,0 +1,81 @@
+name: Weekly WCAG audit
+
+on:
+  schedule:
+    # Mondays 06:00 UTC (~midnight/1am MDT, depending on DST)
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  # The publish step pushes to ThirstyHead/frcc-audit (same owner). If the
+  # GITHUB_TOKEN route ever 403s, set a RESULTS_TOKEN repo secret (fine-grained
+  # PAT with Contents: read/write on frcc-audit) and this workflow uses it.
+  contents: write
+
+concurrency:
+  group: weekly-audit
+  cancel-in-progress: false
+
+jobs:
+  audit-and-publish:
+    name: Audit & publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out audit tooling
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run WCAG 2.1 AA audit
+        run: npm test
+
+      - name: Publish results to ThirstyHead/frcc-audit
+        env:
+          RESULTS_REPO: ThirstyHead/frcc-audit
+          RESULTS_TOKEN: ${{ secrets.RESULTS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TOKEN="${RESULTS_TOKEN:-${GITHUB_TOKEN}}"
+          if [ -z "${TOKEN}" ]; then
+            echo "::error::No token to publish with. Set the RESULTS_TOKEN repository secret."
+            exit 1
+          fi
+
+          RESULTS_DIR="${RUNNER_TEMP}/frcc-audit"
+          git clone "https://x-access-token:${TOKEN}@github.com/${RESULTS_REPO}.git" "${RESULTS_DIR}"
+
+          # Newest raw report produced by this run
+          REPORT="$(ls -t audit/reports/axe-*.json | head -n 1)"
+          echo "Publishing $(basename "${REPORT}")"
+          mkdir -p "${RESULTS_DIR}/reports"
+          cp "${REPORT}" "${RESULTS_DIR}/reports/$(basename "${REPORT}")"
+
+          # Render the Pages site into the results repo's docs/
+          node site/build-site.mjs \
+            --report "${REPORT}" \
+            --history-dir "${RESULTS_DIR}/reports" \
+            --out "${RESULTS_DIR}/docs" \
+            --raw-base "https://github.com/${RESULTS_REPO}/blob/main/reports"
+
+          cd "${RESULTS_DIR}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+          else
+            git commit -m "audit: weekly run $(date -u +%Y-%m-%d)"
+            git push origin HEAD:main
+          fi
+          echo "Site: https://thirstyhead.github.io/frcc-audit/"
