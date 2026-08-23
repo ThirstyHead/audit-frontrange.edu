@@ -55,7 +55,7 @@ jobs:
           RESULTS_DIR="${RUNNER_TEMP}/frcc-audit"
           git clone "https://x-access-token:${TOKEN}@github.com/${RESULTS_REPO}.git" "${RESULTS_DIR}"
 
-          # Newest raw report produced by this run
+          # Newest report produced by this run
           REPORT="$(ls -t audit/reports/axe-*.json | head -n 1)"
           echo "Publishing $(basename "${REPORT}")"
           mkdir -p "${RESULTS_DIR}/reports"
@@ -66,6 +66,7 @@ jobs:
             --report "${REPORT}" \
             --history-dir "${RESULTS_DIR}/reports" \
             --out "${RESULTS_DIR}/docs" \
+            --pages-dir "${REPORT%/*}/pages" \
             --raw-base "https://github.com/${RESULTS_REPO}/blob/main/reports"
 
           cd "${RESULTS_DIR}"

@@ -10,6 +10,10 @@
  *   node site/build-site.mjs --report <latest.json> --history-dir <dir> --out <docsDir>
  *   node site/build-site.mjs --latest --history-dir <dir> --out <docsDir>
  *
+ * If the report's directory contains pages/ (per-page HTML reports from
+ * axe-html-reporter) and/or raw/ (per-page raw results), they are copied
+ * into <docsDir> so the index can link to them.
+ *
  * Options:
  *   --report <path>      Path to the latest raw report JSON (axe-*.json)
  *   --latest             Auto-pick the newest axe-*.json in --history-dir
@@ -23,6 +27,9 @@
  *   index.html    Human-facing report page
  *   latest.json   Latest raw report + metadata
  *   history.json  Time series across all runs (for trends)
+ *   pages/        Per-page standalone HTML reports (axe-html-reporter),
+ *                 copied from the report dir when present
+ *   raw/          Per-page raw axe results JSON, copied when present
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -110,10 +117,6 @@ function loadHistory(dir, latestFile) {
 }
 
 // ---------- html pieces ----------
-function badge(impact) {
-  const meta = SEVERITY_META.find((s) => s[0] === impact) || ['unknown', '#95a5a6', 'Unknown'];
-  return `<span class="badge" style="background:${meta[1]}">${meta[2]}</span>`;
-}
 
 function sparkline(series) {
   if (series.length < 2) return null;
@@ -145,61 +148,36 @@ function sparkline(series) {
     </svg>`;
 }
 
-function pageCard(p) {
-  if (p.error) {
-    return `
-      <section class="page failed">
-        <h3>${esc(p.url)}</h3>
-        <p class="warn">⚠ Could not audit this page: ${esc(p.error)}</p>
-      </section>`;
-  }
-  const groups = SEVERITY_META
-    .map(([sev, , label]) => [sev, label, (p.violations || []).filter((v) => v.impact === sev)])
-    .filter(([, , vs]) => vs.length);
-  const rules = groups
-    .map(
-      ([sev, label, vs]) => `
-        <h4>${label} <span class="count">${vs.reduce((n, v) => n + v.nodes, 0)} nodes</span></h4>
-        <table>
-          <thead><tr><th>Rule</th><th>Requirement</th><th>WCAG</th><th>Nodes</th><th>Examples</th></tr></thead>
-          <tbody>
-          ${vs
-            .map(
-              (v) => `
-            <tr>
-              <td><code>${esc(v.id)}</code></td>
-              <td>${esc(v.help)}</td>
-              <td>${esc((v.wcag || []).join(', '))}</td>
-              <td>${v.nodes}</td>
-              <td class="targets">${esc((v.firstTargets || []).slice(0, 2).join(' | '))}</td>
-            </tr>`,
-            )
-            .join('')}
-          </tbody>
-        </table>`,
-    )
-    .join('');
-  // `incomplete` may be an array (newer runs) or a plain node count (older runs)
-  const incompleteList = Array.isArray(p.incomplete) ? p.incomplete : [];
-  const incCount = incompleteNodes(p);
-  const inc = incompleteList
-    .map(
-      (v) => `
-        <li><code>${esc(v.id)}</code> — ${esc(v.help)} <span class="count">${v.nodes} nodes</span></li>`,
-    )
-    .join('');
-  const incHtml = inc
-    ? `<h4>Needs manual review</h4><ul class="inc">${inc}</ul>`
-    : incCount
-      ? `<p class="count">Needs manual review: ${incCount} items (older report format, per-rule detail unavailable)</p>`
-      : '';
+// Top-level listing: every page tested, with a link to its individual
+// axe-html-reporter audit page when the report carries a pagesHtml map
+// (runs produced by audit/axe-audit.mjs with per-page output).
+function pagesTable(report) {
+  const pages = report.pages || [];
+  const hasReports = !!(report.pagesHtml && Object.keys(report.pagesHtml).length);
+  const rows = pages.map((p) => {
+    if (p.error) {
+      return `    <tr>
+      <td class="pg"><span class="err">${esc(p.url)} — <em>failed: ${esc(String(p.error).slice(0, 160))}</em></span></td>
+      <td class="n">—</td><td class="n">—</td><td></td>
+    </tr>`;
+    }
+    const vio = p.violationTotal || 0;
+    const inc = incompleteNodes(p);
+    const rep = hasReports && report.pagesHtml[p.url] ? report.pagesHtml[p.url] : null;
+    return `    <tr${vio ? ' class="bad"' : ''}>
+      <td class="pg"><a href="${esc(p.url)}" rel="noopener">${esc(p.title || p.url)}</a>${p.title ? ` <span class="pwurl">${esc(p.url)}</span>` : ''}</td>
+      <td class="n${vio ? ' bad' : ''}">${vio || '0'}</td>
+      <td class="n">${inc}</td>
+      <td class="links">${rep ? `<a class="pgrep" href="${esc(rep)}">Audit report</a>` : ''}</td>
+    </tr>`;
+  });
   return `
-    <section class="page">
-      <h3><a href="${esc(p.url)}" rel="noopener">${esc(p.url)}</a>${p.title ? ` <span class="title">“${esc(p.title)}”</span>` : ''}</h3>
-      <p class="total">${p.violationTotal || 0} node-level violations across ${(p.violations || []).length} rules</p>
-      ${p.violations && p.violations.length ? rules : '<p class="clean">✓ No axe violations found on this page.</p>'}
-      ${incHtml}
-    </section>`;
+<table class="pages">
+  <thead><tr><th class="pg">Page</th><th class="n">Violations</th><th class="n">Needs review</th><th>Report</th></tr></thead>
+  <tbody>
+${rows.join('\n')}
+  </tbody>
+</table>`;
 }
 
 function renderSite({ latest, history, args, report }) {
@@ -282,8 +260,26 @@ function renderSite({ latest, history, args, report }) {
   th { color: #566573; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
   .targets { color: #7b8a8b; font-size: .82rem; word-break: break-all; max-width: 260px; }
   code { background: #f4f6f7; padding: .1rem .35rem; border-radius: 4px; font-size: .85em; }
-  .badge { color: #fff; padding: .15rem .5rem; border-radius: 999px; font-size: .78rem; font-weight: 600; }
   ul.inc { margin: .25rem 0 0; padding-left: 1.2rem; }
+  .note { color: #566573; font-size: .9rem; margin: .25rem 0 .75rem; }
+  table.pages { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  table.pages thead th {
+    position: sticky; top: 0; background: #fdfdfc; z-index: 1;
+    border-bottom: 2px solid #e3e7ea;
+  }
+  table.pages th.n, table.pages td.n { text-align: right; white-space: nowrap; }
+  table.pages td.n.bad { color: #b03a2e; font-weight: 700; }
+  table.pages td.pg { max-width: 0; }
+  table.pages td.pg a { word-break: break-all; }
+  table.pages .pwurl { display: block; color: #7b8a8b; font-size: .8rem; margin-top: .1rem; word-break: break-all; }
+  table.pages td.pg .err { word-break: break-all; }
+  table.pages td.links { white-space: nowrap; text-align: right; }
+  table.pages a.pgrep {
+    color: #2e86c1; text-decoration: none; font-weight: 600;
+    border: 1px solid #cfe6f5; background: #f4fafd; padding: .15rem .5rem; border-radius: 6px;
+  }
+  table.pages a.pgrep:hover { background: #e8f4fb; }
+  table.pages tr.bad td.pg a { color: #b03a2e; }
   footer { margin-top: 2.5rem; border-top: 1px solid #e3e7ea; padding-top: 1rem; font-size: .85rem; color: #566573; }
   footer a { color: #2e86c1; }
   .datamenu { display: flex; flex-wrap: wrap; gap: 1rem; margin: .5rem 0; }
@@ -314,7 +310,8 @@ function renderSite({ latest, history, args, report }) {
 ${svg ? `<div>${svg}</div>` : '<p class="count">The trend chart appears once at least two runs have been published.</p>'}
 
 <h2>Pages</h2>
-${(report.pages || []).map(pageCard).join('\n')}
+<p class="note">Every page audited in this run. “Audit report” opens that page's full axe report — violations, needs-review, and passes, with node-level detail.</p>
+${pagesTable(report)}
 
 <h2>Data</h2>
 <div class="datamenu">
@@ -341,7 +338,7 @@ ${(report.pages || []).map(pageCard).join('\n')}
 // ---------- main ----------
 const args = parseArgs(process.argv.slice(2));
 if (!args['history-dir'] || !args.report && !args.latest) {
-  console.error('Usage: node site/build-site.mjs (--report <path> | --latest) --history-dir <dir> [--out <dir>] [--raw-base <url>] [--site-name <name>] [--site-url <url>]');
+  console.error('Usage: node site/build-site.mjs (--report <path> | --latest) --history-dir <dir> [--out <dir>] [--pages-dir <dir>] [--raw-base <url>] [--site-name <name>] [--site-url <url>]');
   process.exit(2);
 }
 
@@ -372,6 +369,18 @@ const latest = history[history.length - 1];
 if (!latest || latest.reportFile !== path.basename(reportPath)) {
   console.error('latest report not found in history-dir — is --report from --history-dir?');
   process.exit(2);
+}
+
+// Copy the run's per-page audit reports (axe-html-reporter HTML) into docs/
+// so the Pages table links resolve. Source is --pages-dir, or pages/ next
+// to the report file (the audit runner writes it there). Replaced wholesale
+// so docs/pages/ matches this run exactly.
+const pagesSrc = args['pages-dir']
+  ? path.resolve(args['pages-dir'])
+  : path.join(path.dirname(path.resolve(args.report || reportPath)), 'pages');
+if (fs.existsSync(pagesSrc) && fs.statSync(pagesSrc).isDirectory()) {
+  fs.rmSync(path.join(outDir, 'pages'), { recursive: true, force: true });
+  fs.cpSync(pagesSrc, path.join(outDir, 'pages'), { recursive: true });
 }
 
 const html = renderSite({ latest, history, args, report });
