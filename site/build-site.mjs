@@ -332,7 +332,7 @@ ${(report.pages || []).map(pageCard).join('\n')}
   Automated tooling detects only a subset of accessibility failures and does not replace
   manual or assistive-technology testing. “Needs manual review” items are results axe
   could not determine automatically.</p>
-  <p>Generated ${esc(new Date().toISOString())} · <a href="https://thirstyhead.github.io/frcc-audit/">thirstyhead.github.io/frcc-audit</a></p>
+  <p>Generated ${esc(new Date().toISOString())} · <a href="https://thirstyhead.com/frcc-audit/">thirstyhead.com/frcc-audit</a></p>
 </footer>
 </body>
 </html>`;

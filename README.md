@@ -16,7 +16,7 @@ This repo holds the **audit tooling only**. Its git history contains features an
 
 1. The workflow installs deps + Chromium, runs the audit (`npm test`).
 2. It pushes the new raw report JSON to **[`ThirstyHead/frcc-audit`](https://github.com/ThirstyHead/frcc-audit)** (the results repo).
-3. It renders the site into that repo's `docs/` folder — served by GitHub Pages at **<https://thirstyhead.github.io/frcc-audit/>**.
+3. It renders the site into that repo's `docs/` folder — served by GitHub Pages at **<https://thirstyhead.com/frcc-audit/>** (the account's `github.io` URL 301-redirects there).
 
 Enabling Pages in the results repo (one-time): in `frcc-audit` → Settings → Pages → Deploy from a branch → `main` / `docs`.
 
