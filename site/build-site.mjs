@@ -34,9 +34,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
+import config from '../audit/config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TOOLS_REPO = 'https://github.com/ThirstyHead/audit-frontrange.edu';
+const TOOLS_REPO = config.toolsRepoUrl;
 
 const SEVERITY_META = [
   ['critical', '#b03a2e', 'Critical'],
@@ -181,10 +182,10 @@ ${rows.join('\n')}
 }
 
 function renderSite({ latest, history, args, report }) {
-  const siteName = args['site-name'] || 'Front Range Community College';
-  const siteUrl = args['site-url'] || 'https://frontrange.edu';
+  const siteName = args['site-name'] || config.siteName;
+  const siteUrl = args['site-url'] || config.baseUrl;
   const rawBase =
-    args['raw-base'] || `https://github.com/ThirstyHead/frcc-audit/blob/main/reports`;
+    args['raw-base'] || `${config.resultsRepoUrl}/blob/main/reports`;
 
   const prev = history.length >= 2 ? history[history.length - 2] : null;
   const delta = prev ? latest.totalViolations - prev.totalViolations : null;
@@ -318,7 +319,7 @@ ${pagesTable(report)}
   <a href="latest.json">latest.json</a>
   <a href="history.json">history.json</a>
   <a href="${esc(rawBase)}/${esc(latest.reportFile)}">Raw report (latest)</a>
-  <a href="https://github.com/ThirstyHead/frcc-audit/tree/main/reports">All raw reports</a>
+  <a href="${esc(config.resultsRepoUrl)}/tree/main/reports">All raw reports</a>
 </div>
 
 <footer>
@@ -329,7 +330,7 @@ ${pagesTable(report)}
   Automated tooling detects only a subset of accessibility failures and does not replace
   manual or assistive-technology testing. “Needs manual review” items are results axe
   could not determine automatically.</p>
-  <p>Generated ${esc(new Date().toISOString())} · <a href="https://thirstyhead.com/frcc-audit/">thirstyhead.com/frcc-audit</a></p>
+  <p>Generated ${esc(new Date().toISOString())} · <a href="${esc(config.canonicalSiteUrl)}">${esc(config.canonicalSiteUrl.replace(/^https?:\/\//, ''))}</a></p>
 </footer>
 </body>
 </html>`;
