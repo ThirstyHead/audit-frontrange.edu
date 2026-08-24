@@ -1,0 +1,10 @@
+{
+  "name": "Front Range Community College",
+  "slug": "frcc",
+  "domain": "frontrange.edu",
+  "baseUrl": "https://frontrange.edu",
+  "toolingRepo": "audit-frontrange.edu",
+  "resultsRepo": "frcc-audit",
+  "siteName": "Front Range Community College",
+  "canonicalSiteUrl": "https://thirstyhead.com/frcc-audit/"
+}

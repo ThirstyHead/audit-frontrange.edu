@@ -1,5 +1,5 @@
 /**
- * WCAG 2.1 AA audit for https://frontrange.edu
+ * WCAG 2.1 AA audit for the configured site (see college.json at the repo root)
  * Run: node audit/axe-audit.mjs
  * Output: timestamped artifacts in audit/reports/ + human summary on stdout.
  *
@@ -14,12 +14,13 @@ import { createHtmlReport } from 'axe-html-reporter';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
+import config from './config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPORTS = path.join(__dirname, 'reports');
 fs.mkdirSync(REPORTS, { recursive: true });
 
-const BASE = 'https://frontrange.edu';
+const BASE = config.baseUrl;
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const SEVERITY_ORDER = ['critical', 'serious', 'moderate', 'minor'];
 
