@@ -1,6 +1,6 @@
 # Plan: Scale the WCAG Audit Pipeline to the CCCS "Power of 13"
 
-**Status:** P0–P4 COMPLETE (2026-08-24). P5 (first real 13-college run) blocked on 13 `RESULTS_TOKEN` secrets (you-do: PATs are browser-only).
+**Status:** P0–P5 COMPLETE (2026-08-25). All 13 new instances + cccs.edu audited, published, and live. Rollup at thirstyhead.com/cccs-accessibility/ shows all 14 colleges.
 **Date:** 2026-08-23
 **Audience:** Scott + CCCS co-maintainers
 
@@ -12,6 +12,21 @@
 - Verified config-driven pipeline on a fresh instance (Aurora, local run).
 - P4: `cccs-accessibility` rollup built + live (fetches each public results repo, renders dashboard; Tuesdays 06:00 UTC + on-demand; stale colleges visible per §6.5).
 - P5: canary dry run on ccaurora in flight. Remaining: RESULTS_TOKEN secrets ×13, then staggered 13-college runs.
+
+**Progress log (2026-08-25):**
+- P5 COMPLETE. RESULTS_TOKEN set in all 13 tooling repos (one fine-grained PAT, Contents read+write, 13 results repos — user-provided).
+- Two production bugs found + fixed by the canary:
+  1. Secret bootstrap: `gh secret set RESULTS_TOKEN -b -` stores the LITERAL string "-" (`-b` means "body value", stdin ignored) — git clone of a public repo succeeds anonymously so the failure only surfaced at push ("Invalid username or token"). Re-set all 13 via stdin redirection (`gh secret set RESULTS_TOKEN --repo ... < file`, no `-b`).
+  2. Workflow: final `echo Site:` line ran `node -p "require('./college.json').canonicalSiteUrl"` AFTER `cd ${RESULTS_DIR}` (results-repo clone, no college.json there) → MODULE_NOT_FOUND after the push had already succeeded. Fix: resolve SITE_URL at the top of the step. Pushed directly to template + 13 new tooling repos; FRCC covered by PR #7 (branch/PR convention).
+- First real run: all 13 green (arapahoe 105p, cncc 80p, ccaurora 16p, ccd 76p, lamar 239p, morgan 72p, njc 83p, otero 94p, ppsc 102p, pueblo 68p, rrcc 57p, tsc 61p, cccs 51p).
+- Data quality: 1084 pages audited, 569 clean, 515 with violations, 0 WAF-challenge pages. Caveats: ccaurora 12/16 pages 403 (site WAF blocks datacenter IPs on most subpaths); morgan's sitemap listed 20 /wp-content/uploads/ media URLs (removed, re-ran with clean 52-page list).
+- Rollup re-rendered: thirstyhead.com/cccs-accessibility/ shows all 14 colleges, 0 "no runs yet".
+- hound v13.1.2 installed in ~/.hound-venv (+ /opt/homebrew/bin/hound symlink) — MCP server no longer crash-loops.
+
+**OPEN (user action):**
+- Merge PR #7 on audit-frontrange.edu (SITE_URL fix for the FRCC instance; 13 new repos already carry it).
+- RESULTS_TOKEN rotation when the PAT expires (runs will fail with an auth error at the publish step until re-set).
+- Optional: per-page 403/404 caveat surfacing in reports; rollup trend history.
 
 ## 1. Confirmed scope (researched, not assumed)
 
