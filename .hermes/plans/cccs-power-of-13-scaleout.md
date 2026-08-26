@@ -1,6 +1,6 @@
 # Plan: Scale the WCAG Audit Pipeline to the CCCS "Power of 13"
 
-**Status:** P0–P5 COMPLETE (2026-08-25). All 13 new instances + cccs.edu audited, published, and live. Rollup at thirstyhead.com/cccs-accessibility/ shows all 14 colleges.
+**Status:** P0–P5 COMPLETE (2026-08-25) + hardening follow-ups deployed (2026-08-26). All 14 instances green and live with coverage-caveat reporting; rollup shows per-college trend sparklines (thirstyhead.com/cccs-accessibility/).
 **Date:** 2026-08-23
 **Audience:** Scott + CCCS co-maintainers
 
@@ -23,10 +23,18 @@
 - Rollup re-rendered: thirstyhead.com/cccs-accessibility/ shows all 14 colleges, 0 "no runs yet".
 - hound v13.1.2 installed in ~/.hound-venv (+ /opt/homebrew/bin/hound symlink) — MCP server no longer crash-loops.
 
+**Progress log (2026-08-26):**
+- Both optional follow-ups shipped and deployed to all 14 instances:
+  - (1) Coverage caveats: audit runner captures HTTP status; non-2xx pages are recorded (`status`, `blocked: true`) and excluded from violation counts; site builder adds a "Not audited (HTTP error)" card + "Coverage caveats (N not audited)" section; history.json gains `cleanPages`/`pagesBlocked`. Deployed to template + 13 new tooling repos; FRCC via PR #8 (merged).
+  - (2) Rollup trend history: `build-rollup.mjs` consumes each results repo's published `docs/history.json` (raw fetch, no API limit) and renders a per-college violations-per-run sparkline + "pages not audited" summary stat. All 14 colleges now show trend lines.
+- CNCC incident (upgraded re-run 32903394288 went red): cncc.edu was behind a Sucuri captcha wall (HTTP 202 + meta-refresh to `/.well-known/sgcaptcha`), so 80/80 pages timed out on `page.goto`. Pre-existing latent crash: the audit loop's catch pushed `{url, error}` with no `violations` field → `printSummary` threw on `p.violations.length` (axe-audit.mjs:107) → exit 1 before any artifact. Fixes: failed pages now carry the full page shape; summary lists blocked/failed pages as SKIP lines.
+- Publish guard added (all 14): publish step fails fast on a missing report and SKIPS publish (loud warning, exit 0) when EVERY page was blocked, so a WAF/captcha wall can't overwrite the last good report. FRCC via PR #9 (pending merge); 13 new repos pushed directly.
+- Guard bug found + fixed same day: `require(reportPath)` in `node -e` treats a relative path (no leading `./`) as a bare module name → always MODULE_NOT_FOUND → guard false-positived and skipped a GOOD CNCC publish (80 audited / 77 clean). Switched to `fs.readFileSync`. Verified end-to-end: CNCC re-run 32917999814 published clean (commit 13e63c4, site 200, 2-run trend).
+- Final state: 14/14 instances green + live; upgraded re-runs landed for 13 colleges (Aurora now reports 8 WAF-403 pages as caveats instead of 1 violation each); rollup live with 14 sparklines, 0 "no runs yet".
+
 **OPEN (user action):**
-- Merge PR #7 on audit-frontrange.edu (SITE_URL fix for the FRCC instance; 13 new repos already carry it).
+- Merge PR #9 on audit-frontrange.edu (publish guard + printSummary crash fix for the FRCC instance; 13 new repos already carry it).
 - RESULTS_TOKEN rotation when the PAT expires (runs will fail with an auth error at the publish step until re-set).
-- Optional: per-page 403/404 caveat surfacing in reports; rollup trend history.
 
 ## 1. Confirmed scope (researched, not assumed)
 
